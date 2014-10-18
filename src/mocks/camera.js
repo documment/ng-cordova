@@ -84,10 +84,17 @@ ngCordovaMocks.factory('$cordovaCamera', ['$q', '$cordovaCameraConstants', funct
           options = options;	// This is just to get by JSHint.
         }
 
-        defer.resolve(this.imageData);
-      }
+        if(options.destinationType == $cordovaCameraConstants.DestinationType.DATA_URL)
+        {
+            defer.resolve(this.imageData);
+        }
+        else
+        {
+            defer.resolve();
+        }
 
-      return defer.promise;
+		return defer.promise;
+      }
     }
-  };
+  }
 }]);

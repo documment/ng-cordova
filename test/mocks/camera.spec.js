@@ -6,10 +6,12 @@ describe('ngCordovaMocks', function() {
 	describe('cordovaCamera', function () {
 		var $rootScope = null;
 		var $cordovaCamera = null;
+        var $cordovaCameraConstants = null;
 		var cameraOptions = {};
 
-		beforeEach(inject(function (_$cordovaCamera_, _$rootScope_) {
+		beforeEach(inject(function (_$cordovaCamera_, _$cordovaCameraConstants_, _$rootScope_) {
 			$cordovaCamera = _$cordovaCamera_;
+            $cordovaCameraConstants = _$cordovaCameraConstants_;
 			$rootScope = _$rootScope_;
 		}));
 
@@ -24,10 +26,10 @@ describe('ngCordovaMocks', function() {
 
 			$rootScope.$digest();
 		});
-
+		
 		it('should throw an error while getting the picture.', function(done) {
 			$cordovaCamera.throwsError = true;
-      $cordovaCamera.imageData = '';
+      	  	$cordovaCamera.imageData = '';
 			$cordovaCamera.getPicture(cameraOptions)
 				.then(
 					function() { expect(true).toBe(false); },
@@ -62,6 +64,7 @@ describe('ngCordovaMocks', function() {
     it('should return an empty string as imageData.', function(done) {
       var expected = '';
       $cordovaCamera.throwsError = false;
+      cameraOptions.destinationType = $cordovaCameraConstants.DestinationType.DATA_URL;	  
       $cordovaCamera.getPicture(cameraOptions)
                     .then(
                             function(imageData) {
@@ -74,5 +77,6 @@ describe('ngCordovaMocks', function() {
 
       $rootScope.$digest();
     });
+	
   });
 })
