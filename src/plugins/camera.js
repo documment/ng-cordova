@@ -3,6 +3,17 @@
 
 angular.module('ngCordova.plugins.camera', [])
 
+  .constant('$cordovaCameraConstants', ['$log', function($log) {
+        try
+        {
+            return Camera;
+        }
+        catch(err)
+        {
+            $log.error('Cordova camera constants not found. Is the camera plugin installed?');
+            return {};
+        }
+  }])
   .factory('$cordovaCamera', ['$q', function ($q) {
 
     return {
