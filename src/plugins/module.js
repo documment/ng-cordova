@@ -36,6 +36,7 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.network',
   'ngCordova.plugins.oauth',
   'ngCordova.plugins.oauthUtility',
+  'ngCordova.plugins.pdf417Scanner',
   'ngCordova.plugins.pinDialog',
   'ngCordova.plugins.prefs',
   'ngCordova.plugins.printer',
