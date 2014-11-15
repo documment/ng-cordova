@@ -51,6 +51,7 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.nativeAudio',
   'ngCordova.plugins.network',
   'ngCordovaOauth',
+  'ngCordova.plugins.pdf417Scanner',
   'ngCordova.plugins.pinDialog',
   'ngCordova.plugins.prefs',
   'ngCordova.plugins.printer',
