@@ -2,7 +2,7 @@
     'use strict';
 
     angular.module('ngCordovaMocks')
-    .factory('$cordovaCamera', CordovaCamera);
+    .factory('ngCordovaMocks.$cordovaCamera', CordovaCamera);
 
     CordovaCamera.$inject = ['$q'];
 
