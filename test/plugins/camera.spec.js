@@ -10,7 +10,7 @@ describe('Service: $cordovaCamera', function() {
 
     navigator.camera = {
       getPicture: angular.noop,
-      cleanup: angular.noop,
+      cleanup: angular.noop
     };
   }));
 

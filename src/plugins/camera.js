@@ -1,38 +1,49 @@
 // install   :   cordova plugin add org.apache.cordova.camera
 // link      :   https://github.com/apache/cordova-plugin-camera/blob/master/doc/index.md#orgapachecordovacamera
+(function () {
+  'use strict';
 
-angular.module('ngCordova.plugins.camera', [])
+  angular.module('ngCordova.plugins.camera', [])
+    .factory('$cordovaCamera', CordovaCamera);
 
-  .factory('$cordovaCamera', ['$q', function ($q) {
+  CordovaCamera.$inject = ['$q'];
 
+  function CordovaCamera($q) {
     return {
-      getPicture: function (options) {
-        var q = $q.defer();
+      getPicture: getPicture,
+      cleanup: cleanup
+    };
 
-        if (!navigator.camera) {
-          q.resolve(null);
-          return q.promise;
-        }
+    function getPicture(_options_) {
+      var options = _options_ || {};
 
-        navigator.camera.getPicture(function (imageData) {
-          q.resolve(imageData);
-        }, function (err) {
-          q.reject(err);
-        }, options);
+      var q = $q.defer();
 
-        return q.promise;
-      },
-
-      cleanup: function () {
-        var q = $q.defer();
-
-        navigator.camera.cleanup(function () {
-          q.resolve();
-        }, function (err) {
-          q.reject(err);
-        });
-
+      if (!navigator.camera) {
+        q.resolve(null);
         return q.promise;
       }
-    };
-  }]);
+
+      navigator.camera.getPicture(function (imageData) {
+        q.resolve(imageData);
+      }, function (err) {
+        q.reject(err);
+      }, options);
+
+      return q.promise;
+    }
+
+    function cleanup() {
+      var q = $q.defer();
+
+      navigator.camera.cleanup(function () {
+        q.resolve();
+      }, function (err) {
+        q.reject(err);
+      });
+
+      return q.promise;
+    }
+  }
+
+})();
