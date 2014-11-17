@@ -4,9 +4,21 @@
   'use strict';
 
   angular.module('ngCordova.plugins.camera', [])
+    .factory('$cordovaCameraConstants', CordovaCameraConstants)
     .factory('$cordovaCamera', CordovaCamera);
 
+  CordovaCameraConstants.$inject = ['$window'];
   CordovaCamera.$inject = ['$q'];
+
+  function CordovaCameraConstants($window) {
+    return {
+      DestinationType: $window.Camera.DestinationType,
+      Direction: $window.Camera.Direction,
+      EncodingType: $window.Camera.EncodingType,
+      MediaType: $window.Camera.MediaType,
+      PictureSourceType: $window.Camera.PopoverArrowDirection
+    };
+  }
 
   function CordovaCamera($q) {
     return {

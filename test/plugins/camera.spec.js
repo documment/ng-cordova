@@ -2,7 +2,16 @@ describe('Service: $cordovaCamera', function() {
 
   var $cordovaCamera, $rootScope;
 
-  beforeEach(module('ngCordova.plugins.camera'));
+  beforeEach(module('ngCordova.plugins.camera', 'ngCordovaMocks', function($provide) {
+    $provide.decorator('$window', injectCordovaCameraConstants);
+
+    injectCordovaCameraConstants.$inject = ['$delegate', 'ngCordovaMocks.$cordovaCameraConstants'];
+
+    function injectCordovaCameraConstants($delegate, $cordovaCameraConstants) {
+      $delegate.Camera = $cordovaCameraConstants;
+      return $delegate;
+    }
+  }));
 
   beforeEach(inject(function (_$cordovaCamera_, _$q_, _$rootScope_) {
     $cordovaCamera = _$cordovaCamera_;
