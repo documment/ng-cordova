@@ -76,15 +76,32 @@ describe('Service: $cordovaSimpleCamera\n', function () {
             $rootScope.$digest();
         });
 
+        it('should contain the current screen orientation', function (done) {
+            var orientation = $cordovaScreenOrientationConstants.landscape_left;
+            spyOn($cordovaScreenOrientation, 'get').andReturn(orientation);
+
+            $cordovaSimpleCamera.getPicture(cameraOptions).then(function (pictureResult) {
+                var isCorrectMediaType = pictureResult.indexOf(dataUrlFormatParams.orientation + orientation) > 0;
+                expect(isCorrectMediaType).toBe(true);
+
+            }).catch(function (err) {
+                expect(false).toBe(true);
+            }).finally(function () {
+                done();
+            });
+            $rootScope.$digest();
+        });
+
         it('should have a structure like: "data:[<MIME-type>][;base64],<data>"', function (done) {
             cameraOptions.encodingType = $cordovaCameraConstants.EncodingType.JPEG;
             $cordovaSimpleCamera.getPicture(cameraOptions).then(function (pictureResult) {
 
                 var prefix = pictureResult.indexOf(dataUrlFormatParams.dataUrlPrefix);
                 var mediaType = pictureResult.indexOf(dataUrlFormatParams.jpegMediaType);
+                var orientation = pictureResult.indexOf(dataUrlFormatParams.orientation);
                 var base64 = pictureResult.indexOf(dataUrlFormatParams.base64);
 
-                expect(0 < prefix < mediaType < base64).toBe(true);
+                expect(0 < prefix < mediaType < orientation < base64).toBe(true);
 
             }).catch(function (err) {
                 expect(false).toBe(true);
