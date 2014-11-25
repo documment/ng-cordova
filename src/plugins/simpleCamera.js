@@ -11,10 +11,11 @@
 
     angular.module('ngCordova.plugins.simpleCamera', ['ngCordova.plugins.camera', 'ngCordova.plugins.screenOrientation'])
     .factory('$cordovaSimpleCamera', CordovaSimpleCamera)
+    .directive('correctImageOrientation', CorrectImageOrientation)
     .constant('dataUrlFormatParams', dataUrlFormatParams);
 
     CordovaSimpleCamera.$inject = ['$log', '$cordovaCamera', '$cordovaCameraConstants', '$cordovaScreenOrientation'];
-    //CorrectImageOrientation.$inject = ['$scope'];
+    CorrectImageOrientation.$inject = ['$log', '$cordovaScreenOrientation', '$cordovaScreenOrientationConstants'];
 
     function CordovaSimpleCamera($log, $cordovaCamera, $cordovaCameraConstants, $cordovaScreenOrientation) {
         return {
@@ -49,7 +50,47 @@
         }
 
         function getScreenOrientation() {
-            return dataUrlFormatParams.orientation + $cordovaScreenOrientation.get();
+            return dataUrlFormatParams.orientation + $cordovaScreenOrientation.get().getName();
         }
     }
+
+    function CorrectImageOrientation ($log, $cordovaScreenOrientation, $cordovaScreenOrientationConstants) {
+        return {
+            restrict: 'A',
+            link: link
+        };
+
+        function link ($scope, $element, $attrs) {
+            var orientationName = parseOrientationName($attrs['src']);
+            var orientation = $cordovaScreenOrientation.get(orientationName);
+
+            if(orientation.isPortrait()) {
+                $element.addClass('correctCameraImageOrientationWhenImagePortrait');
+            } else
+            if(orientation.isUpsideDown()) {
+                $element.addClass('correctCameraImageOrientationWhenImageUpsideDown');
+            } else
+            if(orientation.isLandscapeLeft()) {
+                $element.addClass('correctCameraImageOrientationWhenImageLandscapeLeft');
+            } else
+                $log.debug('No orientation correction applied');
+        }
+
+        function parseOrientationName(dataUrl) {
+            var splitDataUrl = dataUrl.split(dataUrlFormatParams.base64);
+            if(splitDataUrl.length === 0) {
+                $log.warn('Directive used on DataURL that is not formatted properly, no base64');
+                return $cordovaScreenOrientationConstants.unknown
+            }
+
+            var orientationMatch = splitDataUrl[0].match(/orientation=[a-zA-Z]+/);
+            if(orientationMatch.length === 0) {
+                $log.warn('No orientation encoded in DataURL');
+                return $cordovaScreenOrientationConstants.unknown
+            }
+
+            return orientationMatch[0].split('=')[1];
+        }
+    }
+
 })();

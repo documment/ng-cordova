@@ -123,4 +123,44 @@ describe('Service: $cordovaSimpleCamera\n', function () {
         });
     });
 
+    describe('something', function () {
+
+        var $compile;
+        beforeEach(inject(function(_$compile_) {
+            $compile = _$compile_;
+        }));
+
+        it('something"', function (done) {
+            var orientation = $cordovaScreenOrientationConstants.portrait;
+            var isPortrait = true;
+            spyOn($cordovaScreenOrientation, 'get').andReturn({
+                getName: function() {
+                    return orientation;
+                },
+                isPortrait: function() {
+                    return isPortrait;
+                }
+            });
+
+            cameraOptions.encodingType = $cordovaCameraConstants.EncodingType.JPEG;
+            $cordovaSimpleCamera.getPicture(cameraOptions).then(function (pictureResult) {
+
+                var el = '<img correct-image-orientation src="' + pictureResult + '"/>';
+                var element = $compile(el)($rootScope);
+
+                var classes;
+                if(element.attr('class'))
+                    classes = element.attr('class').split(' ');
+
+                expect(classes).toContain('correctCameraImageOrientationWhenImagePortrait');
+
+            }).catch(function (err) {
+                expect(false).toBe(true);
+            }).finally(function () {
+                done();
+            });
+            $rootScope.$digest();
+        });
+    });
+
 });
