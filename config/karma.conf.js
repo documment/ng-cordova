@@ -3,7 +3,7 @@ var buildConfig = require('./build.config.js');
 module.exports = {
   files: [
     // Include jQuery only for testing convience (lots of DOM checking for unit tests on directives)
-    'bower_components/angular/angular.min.js',
+    'bower_components/angular/angular.js',
     'bower_components/angular-mocks/angular-mocks.js',
     'bower_components/jquery/dist/jquery.js',
   ]
@@ -17,7 +17,7 @@ module.exports = {
   frameworks: ['jasmine'],
   reporters: ['progress', 'coverage'],
   preprocessors: {
-    'src/plugins/*.js': ['coverage']
+    //'src/plugins/*.js': ['coverage']
   },
 
   coverageReporter: {

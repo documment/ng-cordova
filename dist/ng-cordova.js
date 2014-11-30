@@ -917,42 +917,65 @@ angular.module('ngCordova.plugins.calendar', [])
 
 // install   :   cordova plugin add org.apache.cordova.camera
 // link      :   https://github.com/apache/cordova-plugin-camera/blob/master/doc/index.md#orgapachecordovacamera
+(function () {
+  'use strict';
 
-angular.module('ngCordova.plugins.camera', [])
+  angular.module('ngCordova.plugins.camera', [])
+    .factory('$cordovaCameraConstants', CordovaCameraConstants)
+    .factory('$cordovaCamera', CordovaCamera);
 
-  .factory('$cordovaCamera', ['$q', function ($q) {
+  CordovaCameraConstants.$inject = ['$window'];
+  CordovaCamera.$inject = ['$q'];
 
+  function CordovaCameraConstants($window) {
     return {
-      getPicture: function (options) {
-        var q = $q.defer();
+      DestinationType: $window.Camera.DestinationType,
+      Direction: $window.Camera.Direction,
+      EncodingType: $window.Camera.EncodingType,
+      MediaType: $window.Camera.MediaType,
+      PictureSourceType: $window.Camera.PopoverArrowDirection
+    };
+  }
 
-        if (!navigator.camera) {
-          q.resolve(null);
-          return q.promise;
-        }
+  function CordovaCamera($q) {
+    return {
+      getPicture: getPicture,
+      cleanup: cleanup
+    };
 
-        navigator.camera.getPicture(function (imageData) {
-          q.resolve(imageData);
-        }, function (err) {
-          q.reject(err);
-        }, options);
+    function getPicture(_options_) {
+      var options = _options_ || {};
 
-        return q.promise;
-      },
+      var q = $q.defer();
 
-      cleanup: function () {
-        var q = $q.defer();
-
-        navigator.camera.cleanup(function () {
-          q.resolve();
-        }, function (err) {
-          q.reject(err);
-        });
-
+      if (!navigator.camera) {
+        q.resolve(null);
         return q.promise;
       }
-    };
-  }]);
+
+      navigator.camera.getPicture(function (imageData) {
+        q.resolve(imageData);
+      }, function (err) {
+        q.reject(err);
+      }, options);
+
+      return q.promise;
+    }
+
+    function cleanup() {
+      var q = $q.defer();
+
+      navigator.camera.cleanup(function () {
+        q.resolve();
+      }, function (err) {
+        q.reject(err);
+      });
+
+      return q.promise;
+    }
+  }
+
+})();
 
 // install   :    cordova plugin add org.apache.cordova.media-capture
 // link      :    https://github.com/apache/cordova-plugin-media-capture/blob/master/doc/index.md
@@ -2244,6 +2267,64 @@ angular.module('ngCordova.plugins.googleMap', [])
     };
   }]);
 
+// install  :     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
+// link     :     https://github.com/floatinghotpot/cordova-httpd
+
+angular.module('ngCordova.plugins.httpd', [])
+	.factory('$cordovaHttpd', [ '$q', '$window', function($q, $window) {
+
+	return {
+		startServer : function(options) {
+			var d = $q.defer();
+
+			cordova.plugins.CorHttpd.startServer(options, function() {
+				d.resolve();
+			}, function() {
+				d.reject();
+			});
+
+			return d.promise;
+		},
+
+		stopServer : function() {
+			var d = $q.defer();
+
+			cordova.plugins.CorHttpd.stopServer(function() {
+				d.resolve();
+			}, function() {
+				d.reject();
+			});
+
+			return d.promise;
+		},
+
+		getURL : function() {
+			var d = $q.defer();
+
+			cordova.plugins.CorHttpd.getURL(function(url) {
+				d.resolve(url);
+			}, function() {
+				d.reject();
+			});
+
+			return d.promise;
+		},
+
+		getLocalPath : function() {
+			var d = $q.defer();
+
+			cordova.plugins.CorHttpd.getLocalPath(function(path) {
+				d.resolve(path);
+			}, function() {
+				d.reject();
+			});
+
+			return d.promise;
+		}
+
+	};
+} ]);
+
 // install   :     cordova plugin add org.apache.cordova.inappbrowser
 // link      :     https://github.com/apache/cordova-plugin-inappbrowser/blob/master/doc/index.md
 
@@ -2357,42 +2438,29 @@ angular.module('ngCordova.plugins.keychain', [])
 
   .factory('$cordovaKeychain', ['$q', function ($q) {
 
+    var kc = new Keychain();
+
     return {
       getForKey: function (key, serviceName) {
         var defer = $q.defer();
-        var kc = new Keychain();
 
-        kc.getForKey(function (value) {
-          defer.resolve(value);
-        }, function (error) {
-          defer.reject(error);
-        }, key, serviceName);
+        kc.getForKey(defer.resolve, defer.reject, key, serviceName);
 
         return defer.promise;
       },
 
       setForKey: function (key, serviceName, value) {
         var defer = $q.defer();
-        var kc = new Keychain();
 
-        kc.setForKey(function () {
-          defer.resolve();
-        }, function (error) {
-          defer.reject(error);
-        }, key, serviceName, value);
+        kc.setForKey(defer.resolve, defer.reject, key, serviceName, value);
 
         return defer.promise;
       },
 
-      removeForKey: function (ey, serviceName) {
+      removeForKey: function (key, serviceName) {
         var defer = $q.defer();
-        var kc = new Keychain();
 
-        kc.removeForKey(function () {
-          defer.resolve();
-        }, function (error) {
-          defer.reject(error);
-        }, key, serviceName);
+        kc.removeForKey(defer.resolve, defer.reject, key, serviceName);
 
         return defer.promise;
       }
@@ -2646,6 +2714,7 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.globalization',
   'ngCordova.plugins.googleAnalytics',
   'ngCordova.plugins.googleMap',
+  'ngCordova.plugins.httpd',
   'ngCordova.plugins.inAppBrowser',
   'ngCordova.plugins.keyboard',
   'ngCordova.plugins.keychain',
@@ -2655,11 +2724,14 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.network',
   'ngCordova.plugins.oauth',
   'ngCordova.plugins.oauthUtility',
+  'ngCordova.plugins.pdf417Scanner',
   'ngCordova.plugins.pinDialog',
   'ngCordova.plugins.prefs',
   'ngCordova.plugins.printer',
   'ngCordova.plugins.progressIndicator',
   'ngCordova.plugins.push',
+  'ngCordova.plugins.simpleCamera',
+  'ngCordova.plugins.screenOrientation',
   'ngCordova.plugins.sms',
   'ngCordova.plugins.socialSharing',
   'ngCordova.plugins.spinnerDialog',
@@ -2669,6 +2741,7 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.toast',
   'ngCordova.plugins.touchid',
   'ngCordova.plugins.vibration',
+  'ngCordova.plugins.videoCapturePlus',
   'ngCordova.plugins.zip'
 ]);
 
@@ -3360,6 +3433,64 @@ angular.module("ngCordova.plugins.oauthUtility", [])
 
   }]);
 
+// install  :    cordova plugin add https://github.com/PDF417/pdf417-phonegap/tree/master/Pdf417
+// link     :    https://github.com/PDF417/pdf417-phonegap
+
+angular.module('ngCordova.plugins.pdf417Scanner', [])
+
+    .factory('$cordovaPdf417Scanner', ['$q', '$log', function ($q, $log) {
+
+        var defaultConfig = {
+            /**
+             * Scan these barcode types
+             * Available: "PDF417", "QR Code", "Code 128", "Code 39", "EAN 13", "EAN 8", "ITF", "UPCA", "UPCE"
+             **/
+            types: ["PDF417", "QR Code"],
+
+            /**
+             * Initiate scan with options
+             * NOTE: Some features are unavailable without a license
+             * Obtain your key at http://pdf417.mobi
+             **/
+            options: {
+                beep: true,
+                noDialog: true,
+                removeOverlay: true,
+                uncertain: false, //Recommended
+                quietZone: false, //Recommended
+                highRes: false, //Recommended
+                frontFace: false
+            },
+            licenseiOs: null,
+            licenseAndroid: null
+
+        };
+
+        return {
+            scan: function (config) {
+                if (!config)
+                    config = defaultConfig;
+
+                var q = $q.defer();
+
+                cordova.plugins.pdf417Scanner.scanWithOptions(
+                    // Register the callback handler
+                    function callback(data) {
+                        $log.debug("Barcode scan successful");
+                        q.resolve(data);
+                    },
+                    // Register the errorHandler
+                    function errorHandler(err) {
+                        $log.debug("Error scanning barcode");
+                        q.reject(err);
+                    },
+                    config.types, config.options, config.licenseiOs, config.licenseAndroid
+                );
+                return q.promise;
+            }
+        };
+    }]);
+
 // install   :      cordova plugin add https://github.com/Paldom/PinDialog.git
 // link      :      https://github.com/Paldom/PinDialog
 
@@ -3591,6 +3722,157 @@ angular.module('ngCordova.plugins.push', [])
     };
   }]);
 
+(function () {
+    'use strict';
+
+    // As described in Supported Interface Orientations: https://developer.apple.com/library/ios/technotes/tn2244/_index.html
+    var ScreenOrientationConstants = {
+        portrait: 'portrait',
+        upsideDown: 'upsideDown', // upside down portrait
+        landscapeRight: 'landscapeRight', // hold iPhone in right hand and turn counter clockwise
+        landscapeLeft: 'landscapeLeft', // hold iPhone in left hand and turn clockwise
+        unknown: 'unknown'
+    };
+
+    angular
+    .module('ngCordova.plugins.screenOrientation', [])
+    .constant('$cordovaScreenOrientationConstants', ScreenOrientationConstants)
+    .factory('$cordovaScreenOrientation', ScreenOrientation);
+
+    ScreenOrientation.$inject = ['$window', '$log'];
+
+    function ScreenOrientation($window, $log) {
+        return {
+            isPortrait: isPortrait,
+            isUpsideDown: isUpsideDown,
+            isLandscapeRight: isLandscapeRight,
+            isLandscapeLeft: isLandscapeLeft,
+            isUnknown: isUnknown,
+            isLocked: isLocked,
+            unlock: unlock,
+            lockPortraitPrimary: lockPortraitPrimary,
+            lockPortraitSecondary: lockPortraitSecondary,
+            lockLandscapePrimary: lockLandscapePrimary,
+            lockLandscapeSecondary: lockLandscapeSecondary
+        };
+
+        function isPortrait() {
+            return readOrientation() === ScreenOrientationConstants.portrait;
+        }
+
+        function isUpsideDown() {
+            return readOrientation() === ScreenOrientationConstants.upsideDown;
+        }
+
+        function isLandscapeRight() {
+            return readOrientation() === ScreenOrientationConstants.landscapeRight;
+        }
+
+        function isLandscapeLeft() {
+            return readOrientation() === ScreenOrientationConstants.landscapeLeft;
+        }
+
+        function isUnknown() {
+            return readOrientation() === undefined;
+        }
+
+        function isLocked() {
+            return !($window.screenOrientation.currOrientation === 'unlocked');
+        }
+
+        function unlock() {
+            screen.unlockOrientation();
+        }
+
+        function lockPortraitPrimary() {
+            screen.lockOrientation('portrait-primary');
+        }
+
+        function lockPortraitSecondary() {
+            screen.lockOrientation('portrait-secondary')
+        }
+
+        function lockLandscapePrimary() {
+            screen.lockOrientation('landscape-primary');
+        }
+
+        function lockLandscapeSecondary() {
+            screen.lockOrientation('landscape-secondary')
+        }
+
+        function readOrientation() {
+            var orientationName;
+            switch ($window.orientation) {
+                case 0:
+                    orientationName = ScreenOrientationConstants.portrait;
+                    break;
+                case 180:
+                    orientationName = ScreenOrientationConstants.upsideDown;
+                    break;
+                case -90:
+                    orientationName = ScreenOrientationConstants.landscapeRight;
+                    break;
+                case 90:
+                    orientationName = ScreenOrientationConstants.landscapeLeft;
+                    break;
+                default:
+                    orientationName = ScreenOrientationConstants.unknown;
+            }
+
+            $log.debug('Orientation is: ' + orientationName);
+            return orientationName;
+        }
+    }
+
+})();
+(function () {
+    'use strict';
+
+    var dataUrlFormatParams = {
+        dataUrlPrefix: 'data:',
+        jpegMediaType: 'image/jpeg',
+        pngMediaType: 'image/png',
+        base64: ';base64,'
+    };
+
+    angular.module('ngCordova.plugins.simpleCamera', ['ngCordova.plugins.camera'])
+    .factory('$cordovaSimpleCamera', CordovaSimpleCamera)
+    .constant('dataUrlFormatParams', dataUrlFormatParams);
+
+    CordovaSimpleCamera.$inject = ['$log', '$cordovaCamera', '$cordovaCameraConstants'];
+
+    function CordovaSimpleCamera($log, $cordovaCamera, $cordovaCameraConstants) {
+        return {
+            getPicture: getPicture,
+            cleanup: $cordovaCamera.cleanup
+        };
+
+        function getPicture(options) {
+            return $cordovaCamera.getPicture(options).then(function(data) {
+                $log.debug('$cordovaCamera getPicture Successful');
+                if (options.destinationType === $cordovaCameraConstants.DestinationType.DATA_URL) {
+                    data = prependDataUrlFormat(data, options);
+                }
+                return data;
+            });
+        }
+
+        function prependDataUrlFormat(picture, options) {
+            var mediaType = getMediaType(options);
+            var format = mediaType + dataUrlFormatParams.base64;
+
+            return format + picture;
+        }
+
+        function getMediaType(options) {
+            if (options.encodingType === $cordovaCameraConstants.EncodingType.PNG) {
+                return dataUrlFormatParams.dataUrlPrefix + dataUrlFormatParams.pngMediaType;
+            } else {
+                return dataUrlFormatParams.dataUrlPrefix + dataUrlFormatParams.jpegMediaType;
+            }
+        }
+    }
+})();
 // install   :      cordova plugin add https://github.com/aharris88/phonegap-sms-plugin.git
 // link      :      https://github.com/aharris88/phonegap-sms-plugin
 
@@ -4063,6 +4345,104 @@ angular.module('ngCordova.plugins.vibration', [])
         return navigator.notification.cancelVibration();
       }
     };
+  }]);
+
+// install   :    cordova plugin add https://github.com/EddyVerbruggen/VideoCapturePlus-PhoneGap-Plugin.git
+// link      :    https://github.com/EddyVerbruggen/VideoCapturePlus-PhoneGap-Plugin
+
+angular.module('ngCordova.plugins.videoCapturePlus', [])
+
+  .provider('$cordovaVideoCapturePlus', [function() {
+
+    var defaultOptions = {};
+
+
+    /**
+     * the nr of videos to record, default 1 (on iOS always 1)
+     *
+     * @param limit
+     */
+    this.setLimit = function setLimit(limit) {
+      defaultOptions.limit = limit;
+    };
+
+
+    /**
+     * max duration in seconds, default 0, which is 'forever'
+     *
+     * @param seconds
+     */
+    this.setMaxDuration = function setMaxDuration(seconds) {
+      defaultOptions.duration = seconds;
+    };
+
+
+    /**
+     * set to true to override the default low quality setting
+     *
+     * @param {Boolean} highquality
+     */
+    this.setHighQuality = function setHighQuality(highquality) {
+      defaultOptions.highquality = highquality;
+    };
+
+    /**
+     * you'll want to sniff the user-Agent/device and pass the best overlay based on that..
+     * set to true to override the default backfacing camera setting. iOS: works fine, Android: YMMV (#18)
+     *
+     * @param {Boolean} frontcamera
+     */
+    this.useFrontCamera = function useFrontCamera(frontcamera) {
+      defaultOptions.frontcamera = frontcamera;
+    };
+
+
+    /**
+     * put the png in your www folder
+     *
+     * @param {String} imageUrl
+     */
+    this.setPortraitOverlay = function setPortraitOverlay(imageUrl) {
+      defaultOptions.portraitOverlay = imageUrl;
+    };
+
+
+    /**
+     *
+     * @param {String} imageUrl
+     */
+    this.setLandscapeOverlay = function setLandscapeOverlay(imageUrl) {
+      defaultOptions.landscapeOverlay = imageUrl;
+    };
+
+
+    /**
+     * iOS only
+     *
+     * @param text
+     */
+    this.setOverlayText = function setOverlayText(text) {
+      defaultOptions.overlayText = text;
+    };
+
+
+    this.$get = ['$q', '$window', function ($q, $window) {
+      return {
+        captureVideo: function(options) {
+          var q = $q.defer();
+
+          if (!$window.plugins.videocaptureplus) {
+            q.resolve(null);
+            return q.promise;
+          }
+
+          $window.plugins.videocaptureplus.captureVideo(q.resolve, q.reject,
+            angular.extend({}, defaultOptions, options));
+
+          return q.promise;
+        }
+      }
+    }];
   }]);
 
 // install  :     cordova plugin add https://github.com/MobileChromeApps/zip.git
