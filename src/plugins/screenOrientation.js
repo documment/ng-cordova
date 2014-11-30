@@ -23,7 +23,13 @@
             isUpsideDown: isUpsideDown,
             isLandscapeRight: isLandscapeRight,
             isLandscapeLeft: isLandscapeLeft,
-            isUnknown: isUnknown
+            isUnknown: isUnknown,
+            isLocked: isLocked,
+            unlock: unlock,
+            lockPortraitPrimary: lockPortraitPrimary,
+            lockPortraitSecondary: lockPortraitSecondary,
+            lockLandscapePrimary: lockLandscapePrimary,
+            lockLandscapeSecondary: lockLandscapeSecondary
         };
 
         function isPortrait() {
@@ -44,6 +50,30 @@
 
         function isUnknown() {
             return readOrientation() === undefined;
+        }
+
+        function isLocked() {
+            return !($window.screenOrientation.currOrientation === 'unlocked');
+        }
+
+        function unlock() {
+            screen.unlockOrientation();
+        }
+
+        function lockPortraitPrimary() {
+            screen.lockOrientation('portrait-primary');
+        }
+
+        function lockPortraitSecondary() {
+            screen.lockOrientation('portrait-secondary')
+        }
+
+        function lockLandscapePrimary() {
+            screen.lockOrientation('landscape-primary');
+        }
+
+        function lockLandscapeSecondary() {
+            screen.lockOrientation('landscape-secondary')
         }
 
         function readOrientation() {
