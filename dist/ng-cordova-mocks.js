@@ -268,6 +268,47 @@ ngCordovaMocks.factory('$cordovaBrightness', ['$q', function ($q) {
 	};
 }]);
 /**
+ * @ngdoc constant
+ * @name ngCordovaMocks.cordovaCameraConstants
+ *
+ * @description
+ * Constants that are used in camera options
+ * Copied directly from cordova's CameraConstants.js
+**/
+ngCordovaMocks.constant('$cordovaCameraConstants', {
+    DestinationType:{
+        DATA_URL: 0,         // Return base64 encoded string
+        FILE_URI: 1,         // Return file uri (content://media/external/images/media/2 for Android)
+        NATIVE_URI: 2        // Return native uri (eg. asset-library://... for iOS)
+    },
+    EncodingType:{
+        JPEG: 0,             // Return JPEG encoded image
+        PNG: 1               // Return PNG encoded image
+    },
+    MediaType:{
+        PICTURE: 0,          // allow selection of still pictures only. DEFAULT. Will return format specified via DestinationType
+        VIDEO: 1,            // allow selection of video only, ONLY RETURNS URL
+        ALLMEDIA : 2         // allow selection from all media types
+    },
+    PictureSourceType:{
+        PHOTOLIBRARY : 0,    // Choose image from picture library (same as SAVEDPHOTOALBUM for Android)
+        CAMERA : 1,          // Take picture from camera
+        SAVEDPHOTOALBUM : 2  // Choose image from picture library (same as PHOTOLIBRARY for Android)
+    },
+    PopoverArrowDirection:{
+        ARROW_UP : 1,        // matches iOS UIPopoverArrowDirection constants to specify arrow location on popover
+        ARROW_DOWN : 2,
+        ARROW_LEFT : 4,
+        ARROW_RIGHT : 8,
+        ARROW_ANY : 15
+    },
+    Direction:{
+        BACK: 0,
+        FRONT: 1
+    }
+});
+
+/**
  * @ngdoc service
  * @name ngCordovaMocks.cordovaCamera
  *
@@ -275,7 +316,7 @@ ngCordovaMocks.factory('$cordovaBrightness', ['$q', function ($q) {
  * A service for testing camera features
  * in an app build with ngCordova.
  **/
-ngCordovaMocks.factory('$cordovaCamera', ['$q', function ($q) {
+ngCordovaMocks.factory('$cordovaCamera', ['$q', '$cordovaCameraConstants', function($q, $cordovaCameraConstants) {
   var throwsError = false;
   var imageData = '';
 
@@ -312,12 +353,19 @@ ngCordovaMocks.factory('$cordovaCamera', ['$q', function ($q) {
           options = options;	// This is just to get by JSHint.
         }
 
-        defer.resolve(this.imageData);
-      }
+        if(options.destinationType == $cordovaCameraConstants.DestinationType.DATA_URL)
+        {
+            defer.resolve(this.imageData);
+        }
+        else
+        {
+            defer.resolve();
+        }
 
-      return defer.promise;
+		return defer.promise;
+      }
     }
-  };
+  }
 }]);
 
 /**
@@ -2224,6 +2272,118 @@ ngCordovaMocks.factory('$cordovaNetwork', function () {
   };
 });
 
+/**
+ * @ngdoc service
+ * @name ngCordovaMocks.cordovaPdf417Scanner
+ *
+ * @description
+ * A service for testing PDF417 scanner features
+ * in an app build with ngCordova. https://github.com/PDF417/pdf417-phonegap
+**/ 
+ngCordovaMocks.factory('$cordovaPdf417Scanner', ['$q', '$log', function($q, $log) {
+    var type = '';
+    var data = '';
+    var raw = '';
+    var resultList = [];
+
+	var throwsError = false;
+    var wasCancelled = false;
+
+	return {
+        /**
+		 * @ngdoc property
+		 * @name throwsError
+		 * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+		 *
+		 * @description
+		 * A flag that signals whether a promise should be rejected or not. 
+		 * This property should only be used in automated tests.
+		**/		
+		throwsError: throwsError,
+
+        /**
+		 * @ngdoc property
+		 * @name scannedText
+         * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+		 *
+		 * @description
+		 * Used to set the scanned barcode type in the result. Possible options are:
+         * "PDF417", "QR Code", "Code 128", "Code 39", "EAN 13", "EAN 8", "ITF", "UPCA", "UPCE"
+		**/		
+		type: type,
+
+        /**
+		 * @ngdoc property
+		 * @name scannedFormat
+         * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+		 *
+		 * @description
+		 * Used to simulate the result data of a successful scan
+		**/
+		data: data,
+
+        /**
+         * @ngdoc property
+         * @name raw
+         * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+         *
+         * @description
+         * Used to simulate the raw result data of a successful scan
+         **/
+        raw: raw,
+
+        /**
+         * @ngdoc property
+         * @name resultList
+         * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+         *
+         * @description
+         * Used to simulate the resultList field when there are more
+         * than one barcode scanned at a time. Returns and array of
+         * {
+         *   type: ...
+         *   data: ...
+         *   raw: ...
+         * }
+         *
+         * The first value of the resultList is always the
+         * same as the root type, data, and value
+         **/
+        resultList: resultList,
+
+        /**
+		 * @ngdoc property
+		 * @name wasCancelled
+         * @propertyOf ngCordovaMocks.cordovaPdf417Scanner
+		 *
+		 * @description
+		 * Used to simulate the cancelled property of a
+		 * successful scan.
+		**/
+		wasCancelled: wasCancelled,
+
+        scan: function() {
+            var defer = $q.defer();
+
+            $log.debug("~~ Mock scanner ~~");
+
+            if (this.throwsError) {
+                $log.debug("Error scanning barcode");
+                defer.reject("Unexpected error");
+            } else {
+                $log.debug("Barcode scan successful");
+                defer.resolve({
+                    type: this.type,
+                    data: this.data,
+                    raw: this.raw,
+                    cancelled: this.wasCancelled,
+                    resultList: this.resultList
+                });
+            }
+            return defer.promise;
+        }
+	};
+}]);
 'use strict';
 
 /**

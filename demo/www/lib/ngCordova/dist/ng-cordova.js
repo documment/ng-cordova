@@ -1095,6 +1095,20 @@ angular.module('ngCordova.plugins.calendar', [])
 
 angular.module('ngCordova.plugins.camera', [])
 
+  .factory('$cordovaCameraConstants', ['$log', function ($log) {
+        try {
+            return {
+                DestinationType: window.Camera.DestinationType,
+                Direction: window.Camera.Direction,
+                EncodingType: window.Camera.EncodingType,
+                MediaType: window.Camera.MediaType,
+                PictureSourceType: window.Camera.PopoverArrowDirection
+            };
+        } catch(err) {
+            $log.error("Unable to read Cordova camera constants. Is the camera plugin installed? " + err);
+            return {};
+        }
+  }])
   .factory('$cordovaCamera', ['$q', function ($q) {
 
     return {
@@ -4847,6 +4861,7 @@ angular.module('ngCordova.plugins', [
   'ngCordova.plugins.nativeAudio',
   'ngCordova.plugins.network',
   'ngCordovaOauth',
+  'ngCordova.plugins.pdf417Scanner',
   'ngCordova.plugins.pinDialog',
   'ngCordova.plugins.prefs',
   'ngCordova.plugins.printer',
@@ -5106,13 +5121,71 @@ angular.module('ngCordova.plugins.network', [])
       },
 
       clearOnlineWatch: function () {
-        document.removeEventListener("online", offlineEvent);
+        document.removeEventListener("online", onlineEvent);
         $rootScope.$$listeners["$cordovaNetwork:online"] = [];
       }
     };
   }])
   .run(['$cordovaNetwork', function ($cordovaNetwork) {
   }]);
+
+// install  :    cordova plugin add https://github.com/PDF417/pdf417-phonegap/tree/master/Pdf417
+// link     :    https://github.com/PDF417/pdf417-phonegap
+
+angular.module('ngCordova.plugins.pdf417Scanner', [])
+
+    .factory('$cordovaPdf417Scanner', ['$q', '$log', function ($q, $log) {
+
+        var defaultConfig = {
+            /**
+             * Scan these barcode types
+             * Available: "PDF417", "QR Code", "Code 128", "Code 39", "EAN 13", "EAN 8", "ITF", "UPCA", "UPCE"
+             **/
+            types: ["PDF417", "QR Code"],
+
+            /**
+             * Initiate scan with options
+             * NOTE: Some features are unavailable without a license
+             * Obtain your key at http://pdf417.mobi
+             **/
+            options: {
+                beep: true,
+                noDialog: true,
+                removeOverlay: true,
+                uncertain: false, //Recommended
+                quietZone: false, //Recommended
+                highRes: false, //Recommended
+                frontFace: false
+            },
+            licenseiOs: null,
+            licenseAndroid: null
+
+        };
+
+        return {
+            scan: function (config) {
+                if (!config)
+                    config = defaultConfig;
+
+                var q = $q.defer();
+
+                cordova.plugins.pdf417Scanner.scan(
+                    // Register the callback handler
+                    function callback(data) {
+                        $log.debug("Barcode scan successful");
+                        q.resolve(data);
+                    },
+                    // Register the errorHandler
+                    function errorHandler(err) {
+                        $log.debug("Error scanning barcode");
+                        q.reject(err);
+                    },
+                    config.types, config.options, config.licenseiOs, config.licenseAndroid
+                );
+                return q.promise;
+            }
+        };
+    }]);
 
 // install   :      cordova plugin add https://github.com/Paldom/PinDialog.git
 // link      :      https://github.com/Paldom/PinDialog
